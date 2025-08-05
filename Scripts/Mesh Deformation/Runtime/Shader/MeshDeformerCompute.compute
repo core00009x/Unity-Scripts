@@ -1,0 +1,31 @@
+#pragma kernel CSMain
+
+StructuredBuffer<float3> vertices;
+RWStructuredBuffer<float3> resultVertices;
+
+float3 deformPoint;
+float radius;
+float strength;
+float deltaTime;
+int vertexCount;
+
+[numthreads(64, 1, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= vertexCount) return;
+
+    float3 vertex = vertices[id.x];
+    float3 dir = vertex - deformPoint;
+    float dist = length(dir);
+
+    if (dist < radius)
+    {
+        float falloff = smoothstep(radius, 0.0, dist);
+        float3 displacement = normalize(dir) * strength * falloff * deltaTime;
+        resultVertices[id.x] = vertex + displacement;
+    }
+    else
+    {
+        resultVertices[id.x] = vertex;
+    }
+}
